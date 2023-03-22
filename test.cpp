@@ -212,14 +212,14 @@ bool checkOuterLineX(char a[][], Point pt1, Point pt2, int direction)  // direct
 // Check outer line (go out of the main array to "0" zone)
 bool checkOuterLineY(char a[][], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
 {
-	// Find point having col min
+	
 	Point pMinRow = pt1, pMaxRow = pt2;
 	if (pt1.row > pt2.row)
 	{
 		pMinCol = pt2;
 		pMaxCol = pt1;
 	}
-	// Find begin line & begin col
+	
 	int row = pMaxRow.row + type;
 	int col = pMinRow.col;
 	int rowFinish = pMaxRow.row;
@@ -230,8 +230,8 @@ bool checkOuterLineY(char a[][], Point pt1, Point pt2, int direction)  // direct
 		col = pMaxRow.col;
 		cout << "RowFinish = " << rowFinish << endl;
 	}
-	// Find column finish of line
-	// Check more
+	
+	
 	if ((a[rowFinish][col] == '0' || pMinRow.row == pMaxRow.row) && checkLineY(pMinRow.row, pMaxRow.row, col))
 	{
 		while (a[row][pMinRow.col] == '0' && a[row][pMaxRow.row] == '0')
