@@ -1,0 +1,5 @@
+               =============> Pikachu Matching Game <=============
+                    ......... Game Version: Console .........
+
+
+                    Press 1 to start game, press 2 to exit: 
