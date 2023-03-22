@@ -13,7 +13,7 @@ struct Point
 {
 	int row;
 	int col;
-	//int value;
+	int value;
 };
 Point pt1;
 Point pt2;
@@ -53,24 +53,43 @@ void deleteScreen()
 	system("CLS");
 }
 
-void createArray(char a[][13], int row, int col)
+void createArray(int a[][13], int row, int col)
 {
 	// Set up barrier
 	for (int i = 0; i < col; i++)
-		a[0][i] = '0';
+		a[0][i] = 0;
 	for (int i = 0; i < col; i++)
-		a[row - 1][i] = '0';
+		a[row - 1][i] = 0;
 	for (int i = 0; i < row; i++)
-		a[i][0] = '0';
+		a[i][0] = 0;
 	for (int i = 0; i < row; i++)
-		a[i][col - 1] = '0';
+		a[i][col - 1] = 0;
 
 	for (int i = 1; i < row - 1; i++)
 		for(int j = 1; j < col - 1; j++)
-			a[i][j] = 49 + (rand() % 9);
+			a[i][j] = 1 + (rand() % 9);
 }
 
-void displayArray(char a[][13], int row, int col)
+/*int** getArray(int row, int col)
+{
+	int** arr = 0;
+	arr = new int*[row];
+	for (int r = 0; r < row; r++)
+	{
+		arr[r] = new int[col];
+		for (int c = 0; c < col; c++)
+		{
+			arr[0][c] = 0;
+			arr[row - 1][c] = 0;
+			arr[r][0] = 0;
+			arr[r][col - 1] = 0;
+			if (r != 0 && r != row - 1 && c != 0 && c != col -1)
+				arr[r][c] = 1 + (rand() % 9);
+		}
+	}
+}*/
+
+void displayArray(int a[][13], int row, int col)
 {
 	
 	for (int i = 0; i < row; i++)
@@ -82,17 +101,17 @@ void displayArray(char a[][13], int row, int col)
 }
 
 // Check on 1 line, linear direction
-bool checkLineX(char a[][], int y1, int y2, int x)
+bool checkLineX(int a[][13], int y1, int y2, int x)
 {
 	// Find point have column max & min
 	int minimum = min(y1, y2);
 	int maximum = max(y1, y2);
 	// run column
-	for (int y = min + 1; y < max; y++)
+	for (int y = minimum + 1; y < maximum; y++)
 	{
-		if (a[x][y] != '0') // if there is at least 1 none-0 char, false
+		if (a[x][y] != 0) // if there is at least 1 none-0 char, false
 		{
-			cout << "die: (" << x << ", " << y << ")" << endl;
+			cout << "die row: column can't run (" << x << ", " << y << ")" << endl;
 			return false;
 		}
 	}
@@ -101,17 +120,17 @@ bool checkLineX(char a[][], int y1, int y2, int x)
 }
 
 // Check on 1 column, linear direction
-bool checkLineY(char a[][], int x1, int x2, int y)
+bool checkLineY(int a[][13], int x1, int x2, int y)
 {
 	// Find point have row max & min
 	int minimum = min(x1, x2);
 	int maximum = max(x1, x2);
 	// run row
-	for (int x = min + 1; x < max; x++)
+	for (int x = minimum + 1; x < maximum; x++)
 	{
-		if (a[x][y] != '0') // if there is at least 1 none-0 char, false
+		if (a[x][y] != 0) // if there is at least 1 none-0 char, false
 		{
-			cout << "die: (" << x << ", " << y << ")" << endl;
+			cout << "die col: row can't run (" << x << ", " << y << ")" << endl;
 			return false;
 		}
 	}
@@ -119,7 +138,7 @@ bool checkLineY(char a[][], int x1, int x2, int y)
 	return true;
 }
 
-bool checkRectX(char a[][], Point pt1, Point pt2)
+bool checkRectX(int a[][13], Point pt1, Point pt2)
 {
 	// Find point having y min & max
 	Point pMinCol = pt1, pMaxCol = pt2;
@@ -131,10 +150,10 @@ bool checkRectX(char a[][], Point pt1, Point pt2)
 
 	for (int col = pMinCol.col; col <= pMaxCol.col; col++)
 	{
-		if (col > pMinCol.col && a[pMinCol.row][col] != '0')
+		if (col > pMinCol.col && a[pMinCol.row][col] != 0)
 			return false;
 		// Check 2 line
-		if (a[pMaxCol.row][col] == '0' && checkLineY(pMaxCol.row, pMaxCol.row, col) && checkLineX(col, pMaxCol.col, pMaxCol.row))
+		if (a[pMaxCol.row][col] == 0 && checkLineY(a, pMaxCol.row, pMaxCol.row, col) && checkLineX(a, col, pMaxCol.col, pMaxCol.row))
 		{
 			cout << "Rect x: (" << pMinCol.row << ", " << pMinCol.col << ") => (" << pMinCol.row << ", " << col << ")  => (" << pMaxCol.row << " ," << col << ")  => (" << pMaxCol.row << " ," << pMaxCol.col << ")" << endl;
 			 // If 3 lines then return true
@@ -145,7 +164,7 @@ bool checkRectX(char a[][], Point pt1, Point pt2)
 	}
 }
 
-bool checkRectY(char a[][], Point pt1, Point pt2)
+bool checkRectY(int a[][13], Point pt1, Point pt2)
 {
 	// Find point having x min
 	Point pMinRow = pt1, pMaxRow = pt2;
@@ -157,10 +176,10 @@ bool checkRectY(char a[][], Point pt1, Point pt2)
 
 	for (int row = pMinRow.row; row <= pMaxRow.row; row++)
 	{
-		if (row > pMinRow.row && a[row][pMinRow.col] != '0')
+		if (row > pMinRow.row && a[row][pMinRow.col] != 0)
 			return false;
 		// Check 2 line
-		if (a[row][pMaxRow.col] == '0' && checkLineX(pMinRow.col, pMaxRow.col, row) && checkLineY(row, pMaxRow.row, pMaxRow.col))
+		if (a[row][pMaxRow.col] == 0 && checkLineX(a, pMinRow.col, pMaxRow.col, row) && checkLineY(a, row, pMaxRow.row, pMaxRow.col))
 		{
 			cout << "Rect y: (" << pMinRow.row << ", " << pMinRow.col << ") => (" << row << ", " << pMinRow.col << ") => (" << row << " ," << pMaxRow.col << ")  => (" << pMaxRow.row << " ," << pMaxRow.col << ")" << endl;
 			 // If 3 lines then return true
@@ -172,7 +191,7 @@ bool checkRectY(char a[][], Point pt1, Point pt2)
 }
 
 // Check outer line (go out of the main array to "0" zone)
-bool checkOuterLineX(char a[][], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
+bool checkOuterLineX(int a[][13], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
 {
 	// Find point having col min
 	Point pMinCol = pt1, pMaxCol = pt2;
@@ -182,71 +201,134 @@ bool checkOuterLineX(char a[][], Point pt1, Point pt2, int direction)  // direct
 		pMaxCol = pt1;
 	}
 	// Find begin line & begin col
-	int col = pMaxCol.col + type;
+	int col = pMaxCol.col + direction;
 	int row = pMinCol.row;
 	int colFinish = pMaxCol.col;
-	if (type == -1)
+	if (direction == -1)
 	{
 		colFinish =pMinCol.col;
-		col = pMinCol.col + type;
+		col = pMinCol.col + direction;
 		row = pMaxCol.row;
 		cout << "ColFinish = " << colFinish << endl;
 	}
 	// Find column finish of line
 	// Check more
-	if ((a[row][colFinish] == '0' || pMinCol.col == pMaxCol.col) && checkLineX(pMinCol.col, pMaxCol.col, row))
+	if ((a[row][colFinish] == 0 || pMinCol.col == pMaxCol.col) && checkLineX(a, pMinCol.col, pMaxCol.col, row))
 	{
-		while (a[pMinCol.row][col] == '0' && a[pMaxCol.row][col] == '0')
+		while (a[pMinCol.row][col] == 0 && a[pMaxCol.row][col] == 0)
 		{
-			if (checkLineY(pMinCol.row, pMaxCol.row, col))
+			if (checkLineY(a, pMinCol.row, pMaxCol.row, col))
 			{
-				cout << "(" << pMinCol.row << ", " << pMinCol.col << ") => (" << pMinCol.row << ", " << col << ") => (" << pMaxCol.row << ", " << col << ") => (" << pMaxCol.row << ", " pMaxCol.col << ")" << endl;
+				cout << "(" << pMinCol.row << ", " << pMinCol.col << ") => (" << pMinCol.row << ", " << col << ") => (" << pMaxCol.row << ", " << col << ") => (" << pMaxCol.row << ", " << pMaxCol.col << ")" << endl;
 				return true;
 			}
-			col += type;
+			col += direction;
 		}
 	}
 	return false;
 }
 
 // Check outer line (go out of the main array to "0" zone)
-bool checkOuterLineY(char a[][], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
+bool checkOuterLineY(int a[][13], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
 {
 	
 	Point pMinRow = pt1, pMaxRow = pt2;
 	if (pt1.row > pt2.row)
 	{
-		pMinCol = pt2;
-		pMaxCol = pt1;
+		pMinRow = pt2;
+		pMaxRow = pt1;
 	}
 	
-	int row = pMaxRow.row + type;
+	int row = pMaxRow.row + direction;
 	int col = pMinRow.col;
 	int rowFinish = pMaxRow.row;
-	if (type == -1)
+	if (direction == -1)
 	{
 		rowFinish =pMinRow.row;
-		row = pMinRow.row + type;
+		row = pMinRow.row + direction;
 		col = pMaxRow.col;
 		cout << "RowFinish = " << rowFinish << endl;
 	}
 	
-	
-	if ((a[rowFinish][col] == '0' || pMinRow.row == pMaxRow.row) && checkLineY(pMinRow.row, pMaxRow.row, col))
+
+	if ((a[rowFinish][col] == 0 || pMinRow.row == pMaxRow.row) && checkLineY(a, pMinRow.row, pMaxRow.row, col))
 	{
-		while (a[row][pMinRow.col] == '0' && a[row][pMaxRow.row] == '0')
+		while (a[row][pMinRow.col] == 0 && a[row][pMaxRow.row] == 0)
 		{
-			if (checkLineX(pMinRow.col, pMaxRow.col, row))
+			if (checkLineX(a, pMinRow.col, pMaxRow.col, row))
 			{
-				cout << "(" << pMinRow.row << ", " << pMinRow.col << ") => (" << row << ", " << pMinRow.col << ") => (" << row << ", " << pMaxRow.col << ") => (" << pMaxRow.row << ", " pMaxRow.col << ")" << endl;
+				cout << "(" << pMinRow.row << ", " << pMinRow.col << ") => (" << row << ", " << pMinRow.col << ") => (" << row << ", " << pMaxRow.col << ") => (" << pMaxRow.row << ", " << pMaxRow.col << ")" << endl;
 				return true;
 			}
-			row += type;
+			row += direction;
 		}
 	}
 	return false;
 }
 
+void check2Points(int a[][13], Point pt1, Point pt2)
+{
+	if ((pt1.row != pt2.row || pt1.col != pt2.col) && a[pt1.row][pt1.col] == a[pt2.row][pt2.col])
+	{
+		// Check line with row
+		if(pt1.row == pt2.row)
+		{
+			cout << "Row x: ";
+			if (checkLineX(a, pt1.col, pt2.col, pt1.row))
+			{
+				cout << "OK\n";
+				
+			}
+		}
+		// Check line with column
+		if(pt1.col == pt2.col)
+		{
+			cout << "Col y: ";
+			if (checkLineY(a, pt1.row, pt2.row, pt1.col))
+			{
+				cout << "OK col y\n";
+				
+			}
+		}
+		// Check in rectangle
+		if (checkRectX(a, pt1, pt2))
+		{
+			cout << "Rect x: OK\n";
+			
+		}
+		// Check in rectangle
+		if (checkRectY(a, pt1, pt2))
+		{
+			cout << "Rect y: OK\n";
+			
+		}
+		// Check more right
+		if (checkOuterLineX(a, pt1, pt2, 1))
+		{
+			cout << "Go right OK\n";
+			
+		}
+		// Check more left
+		if (checkOuterLineX(a, pt1, pt2, -1))
+		{
+			cout << "Go left OK\n";
+			
+		}
+		// Check more down
+		if (checkOuterLineY(a, pt1, pt2, 1))
+		{
+			cout << "Go down OK\n";
+			
+		}
+		// Check more up
+		if (checkOuterLineY(a, pt1, pt2, -1))
+		{
+			cout << "Go up OK\n";
+			
+		}
+	}
+	
+}
 
 int main()
 {
@@ -256,13 +338,36 @@ int main()
 	if (initNum == 1)
 	{
 		deleteScreen();
-		char a[8][13], x1, y1, x2, y2;
+		int a[8][13], x1, y1, x2, y2;
+		int b[8][13] =  {{0,0,0,0,0,0,0,0,0,0,0,0,0}
+						,{0,1,2,3,0,0,0,0,0,0,0,0,0}
+						,{0,0,0,0,0,0,0,0,0,1,2,3,0}
+						,{0,0,0,0,0,0,0,0,0,0,0,0,0}
+						,{0,0,0,0,0,0,1,0,0,0,0,0,0}
+						,{0,0,0,0,0,0,0,0,0,0,0,0,0}
+						,{0,0,2,0,0,0,0,0,0,0,0,3,0}
+						,{0,0,0,0,0,0,0,0,0,0,0,0,0}};
 		srand(time(0));
 
 		createArray(a, 8, 13);
-		displayArray(a, 8, 13);
+		displayArray(b, 8, 13);
 
+		cout << "Input x1, y1: \n";
+		cin >> x1 >> y1;
+		pt1.row = x1;
+		pt1.col = y1;
+		pt1.value = a[pt1.row][pt1.col];
+
+		cout << "Input x2, y2: \n";
+		cin >> x2 >> y2;
+		pt2.row = x2;
+		pt2.col = y2;
+		pt2.value = a[pt2.row][pt2.col];
+
+		check2Points(b, pt1, pt2);
 		
+		//displayArray(a, 8, 13);
+
 		system("pause");
 	}
 	else
