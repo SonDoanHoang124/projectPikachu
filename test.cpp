@@ -39,6 +39,20 @@ struct Point
 Point pt1;
 Point pt2;
 
+void resizeConsole(int width, int height)
+{
+	HWND console = GetConsoleWindow();
+	RECT r;
+	GetWindowRect(console, &r);
+	MoveWindow(console, r.left, r.top, width, height, TRUE);
+}
+
+void HideScrollbar()
+{
+    HWND hWnd = GetConsoleWindow();
+    ShowScrollBar(hWnd, SB_BOTH, false);
+}
+
 void textColor(int x)
 {
 	HANDLE mau;
@@ -88,12 +102,65 @@ void congratulating()
 	ifs.close();
 }
 
+unsigned char getKey()
+{
+    unsigned char ch = getch();
+    if (ch == 0x00)
+    {
+        // first char is a zero so lets look at the next char
+        ch = getch();
+        switch (ch)
+        {
+        case ARROW_UP:
+            return ch;
+        case ARROW_LEFT:
+            return ch;
+        case ARROW_RIGHT:
+            return ch;
+        case ARROW_DOWN:
+            return ch;
+        default:
+            return ARROW_NONE;
+        }
+    }
+    else
+    {
+        // When user use wasd keys
+        switch (ch)
+        {
+        case 'w':
+            return ARROW_UP;
+        case 'a':
+            return ARROW_LEFT;
+        case 'd':
+            return ARROW_RIGHT;
+        case 's':
+            return ARROW_DOWN;
+        case 'h':
+            return HELP;
+        }
+    }
+
+    // Enter key is the same as space key
+    if (ch == ENTER_KEY || ch == SPACE_KEY)
+    {
+        return ENTER_KEY;
+    }
+
+    if (ch == ESC_KEY)
+    {
+        return ch;
+    }
+
+    return ch;
+}
+
 void deleteScreen()
 {
 	system("CLS");
 }
 
-void createArray(char a[][MAXCOL], int row, int col)
+/*void createArray(char a[][MAXCOL], int row, int col)
 {
 	// Set up barrier
 	for (int i = 0; i < col; i++)
@@ -107,27 +174,32 @@ void createArray(char a[][MAXCOL], int row, int col)
 
 	for (int i = 1; i < row - 1; i++)
 		for(int j = 1; j < col - 1; j++)			
-			a[i][j] = 49 + (rand() % 9);
-}
-
-/*int** getArray(int row, int col)
-{
-	int** arr = 0;
-	arr = new int*[row];
-	for (int r = 0; r < row; r++)
-	{
-		arr[r] = new int[col];
-		for (int c = 0; c < col; c++)
-		{
-			arr[0][c] = 0;
-			arr[row - 1][c] = 0;
-			arr[r][0] = 0;
-			arr[r][col - 1] = 0;
-			if (r != 0 && r != row - 1 && c != 0 && c != col -1)
-				arr[r][c] = 1 + (rand() % 9);
-		}
-	}
+			a[i][j] = 49 + (rand() % 4);
 }*/
+
+void createArray(char **&a, int row, int col)
+{
+	// Create a square matrix for the given difficulty
+    a = new char*[row];
+	
+	for (int i = 0; i < row; i++)
+        a[i] = new char [col];
+
+	// Set up barrier
+	for (int i = 0; i < col; i++)
+		a[0][i] = ' ';
+	for (int i = 0; i < col; i++)
+		a[row - 1][i] = ' ';
+	for (int i = 0; i < row; i++)
+		a[i][0] = ' ';
+	for (int i = 0; i < row; i++)
+		a[i][col - 1] = ' ';
+	// Put random numbers into array
+	for (int i = 1; i < row - 1; i++)
+		for(int j = 1; j < col - 1; j++)			
+			a[i][j] = 49 + (rand() % 4);
+		
+}
 
 /*void displayArray(int a[][13], int row, int col)
 {
@@ -172,7 +244,7 @@ void displayArray(char a, int row, int col)
 }
 
 // Check on 1 line, linear direction
-bool checkLineX(char a[][MAXCOL], int y1, int y2, int x)
+bool checkLineX(char **a, int y1, int y2, int x)
 {
 	// Find point have column max & min
 	int minimum = min(y1, y2);
@@ -192,7 +264,7 @@ bool checkLineX(char a[][MAXCOL], int y1, int y2, int x)
 }
 
 // Check on 1 column, linear direction
-bool checkLineY(char a[][MAXCOL], int x1, int x2, int y)
+bool checkLineY(char **a, int x1, int x2, int y)
 {
 	// Find point have row max & min
 	int minimum = min(x1, x2);
@@ -211,7 +283,7 @@ bool checkLineY(char a[][MAXCOL], int x1, int x2, int y)
 	return true;
 }
 
-bool checkRectX(char a[][MAXCOL], Point pt1, Point pt2)
+bool checkRectX(char **a, Point pt1, Point pt2)
 {
 	// Find point having y min & max
 	Point pMinCol = pt1, pMaxCol = pt2;
@@ -237,7 +309,7 @@ bool checkRectX(char a[][MAXCOL], Point pt1, Point pt2)
 	}
 }
 
-bool checkRectY(char a[][MAXCOL], Point pt1, Point pt2)
+bool checkRectY(char **a, Point pt1, Point pt2)
 {
 	// Find point having x min
 	Point pMinRow = pt1, pMaxRow = pt2;
@@ -264,7 +336,7 @@ bool checkRectY(char a[][MAXCOL], Point pt1, Point pt2)
 }
 
 // Check outer line (go out of the main array to "0" zone)
-bool checkOuterLineX(char a[][MAXCOL], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
+bool checkOuterLineX(char **a, Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
 {
 	// Find point having col min
 	Point pMinCol = pt1, pMaxCol = pt2;
@@ -302,7 +374,7 @@ bool checkOuterLineX(char a[][MAXCOL], Point pt1, Point pt2, int direction)  // 
 }
 
 // Check outer line (go out of the main array to "0" zone)
-bool checkOuterLineY(char a[][MAXCOL], Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
+bool checkOuterLineY(char **a, Point pt1, Point pt2, int direction)  // direction return 1 (go forward) and -1 (go backward)
 {
 	
 	Point pMinRow = pt1, pMaxRow = pt2;
@@ -344,7 +416,7 @@ bool checkOuterLineY(char a[][MAXCOL], Point pt1, Point pt2, int direction)  // 
 
 //}
 
-void check2Points(char a[][MAXCOL], Point pt1, Point pt2)
+void check2Points(char **a, Point pt1, Point pt2)
 {
 	if ((pt1.row != pt2.row || pt1.col != pt2.col) && a[pt1.row][pt1.col] == a[pt2.row][pt2.col])
 	{
@@ -415,7 +487,7 @@ void check2Points(char a[][MAXCOL], Point pt1, Point pt2)
 	}	
 }
 
-bool checkEndGame(char a[][MAXCOL], char b[][MAXCOL], int row, int col)
+bool checkEndGame(char **a, char b[][MAXCOL], int row, int col)
 {
 	for (int i = 1; i < row - 1; i++)
 	{
@@ -428,6 +500,8 @@ bool checkEndGame(char a[][MAXCOL], char b[][MAXCOL], int row, int col)
 
 int main()
 {
+	resizeConsole(1100, 800);
+	HideScrollbar();
 	greating();
 	int initNum;
 	cin >> initNum;
@@ -435,7 +509,9 @@ int main()
 	{
 		deleteScreen();
 		int x1, y1, x2, y2;
-		char a[MAXROW][MAXCOL] = {
+		//char a[MAXROW][MAXCOL];
+		char **a = NULL;
+		/* = {
 			{' ',' ',' ',' ',' ',' '},
 			{' ',' ',' ','1','1',' '},
 			{' ',' ',' ',' ',' ',' '},
@@ -443,7 +519,7 @@ int main()
 			{' ',' ',' ',' ','1',' '},
 			{' ','1',' ',' ',' ',' '},
 			{' ',' ',' ',' ',' ',' '}
-		};
+		};*/
 		char b[MAXROW][MAXCOL] = {
 			{' ',' ',' ',' ',' ',' '},
 			{' ',' ',' ',' ',' ',' '},
@@ -455,7 +531,7 @@ int main()
 		};
 
 		srand(time(0));
-		//createArray(a, MAXROW, MAXCOL);
+		createArray(a, MAXROW, MAXCOL);
 
 		while (true)
 		{	
@@ -504,6 +580,9 @@ int main()
 			system("pause");
 			deleteScreen();
 		}
+		for (int i = 0; i < MAXROW; i++)
+			delete [] a[i];
+		delete [] a;
 		congratulating();
 		gotoxy(0, 0);
 		gotoxy(50, 8);
