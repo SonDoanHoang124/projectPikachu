@@ -6,6 +6,7 @@
 #include <time.h>
 #include <algorithm>
 #include <mmsystem.h>
+#include <unistd.h>
 
 const int MAXROW = 6;
 const int MAXCOL = 6;
@@ -63,11 +64,11 @@ void textColor(int backgroundColor, int textColor)
 
 void gotoxy(SHORT x, SHORT y)
 {
-  static HANDLE h = NULL;  
-  if(!h)
-    h = GetStdHandle(STD_OUTPUT_HANDLE);
-  COORD c = {x, y};  
-  SetConsoleCursorPosition(h,c);
+	static HANDLE h = NULL;  
+	if(!h)
+		h = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD c = {x, y};  
+	SetConsoleCursorPosition(h,c);
 }
 
 void greating()
@@ -161,23 +162,6 @@ void deleteScreen()
 	system("CLS");
 }
 
-/*void createArray(char a[][MAXCOL], int row, int col)
-{
-	// Set up barrier
-	for (int i = 0; i < col; i++)
-		a[0][i] = ' ';
-	for (int i = 0; i < col; i++)
-		a[row - 1][i] = ' ';
-	for (int i = 0; i < row; i++)
-		a[i][0] = ' ';
-	for (int i = 0; i < row; i++)
-		a[i][col - 1] = ' ';
-
-	for (int i = 1; i < row - 1; i++)
-		for(int j = 1; j < col - 1; j++)			
-			a[i][j] = 49 + (rand() % 4);
-}*/
-
 void createArray(char **&a, int row, int col)
 {
 	// Create a matrix for the given row and col
@@ -200,19 +184,15 @@ void createArray(char **&a, int row, int col)
 	char set[(row - 2) * (col - 2)];
 	for (int i = 0; i < (row - 2) * (col - 2); i++)
 	{
-		if(i % 2 == 0)	set[i] = 65 + i;
-		else	set[i] = 66 + i;
-		//set[i] = 65 + (rand() % ((row - 2) * (col - 2) / 2)) ;
+		for (int j = 0; j < (row - 2) * (col - 2); j++)
+		{
+			if(i % 2 == 0)	set[i] = 65 + i;
+			else	set[i] = 64 + i;
+			//set[i] = 65 + (rand() % ((row - 2) * (col - 2) / 2)) ;
+		}
 	}
-	int check = 11 + rand() % 20;
 
-	for (int i = 1; i < (row - 2) * (col - 2); i++)
-	{
-	    for (int j = 0; i < i; j++)
-	        swap(set[i], set[j]);
-	}
-    
-	// Put random numbers into array
+	// Put values into array
 	int runner = 0;
 	for (int i = 1; i < row - 1; i++)
 	{
@@ -222,28 +202,28 @@ void createArray(char **&a, int row, int col)
 		    runner++;
 		}
 	}
-}
 
-/*void displayArray(int a[][13], int row, int col)
-{
-	
-	for (int i = 0; i < row; i++)
+	// Shuffle 2d array (https://www.youtube.com/watch?v=ByLrbQibG9g - Portfolio Courses)
+	srand(time(NULL) * getpid());
+    int randRow = 0, randCol = 0;
+	char temp;
+	for (int i = 1; i < row - 1; i++)
 	{
-		for(int j = 0; j < col; j++)
+		for(int j = 1; j < col - 1; j++)
 		{
-			cout << a[i][j] << " ";
+			randRow = 1 + (rand() % (row - 2));
+			randCol = 1 + (rand() %(col - 2));
+
+			temp = a[i][j];
+			a[i][j] = a[randRow][randCol];
+			a[randRow][randCol] = temp;
 		}
-		cout << endl;
 	}
-}*/
+}
 
 void displayArray(char a,/*char **&table,*/ int row, int col)
 {
     int nRow = 5, mCol = 11; 
-
-	/*table = new char*[row * nRow];
-	for (int i = 0; i < col; i++)
-		table[i] = new char [col * mCol];*/
 		
 	for (int i = 1; i <= nRow; i++) // hàng -> y
 	{
@@ -271,7 +251,7 @@ void displayArray(char a,/*char **&table,*/ int row, int col)
 	}
 }
 
-void overlapCube(char **a,/* int row, int col,*/ int bgColor, int txtColor, Point A)
+void overlapCube(char **a, int bgColor, int txtColor, Point A)
 {
 	//textColor(BLACK, BLACK);
 	int nRow = 5, mCol = 11; 
@@ -404,13 +384,13 @@ void reSelectedCube(char **a,int bgColor, int txtColor, Point A)
 			else if ((i == 1 || i == nRow) && (1 < j) && (j < mCol))
 			{
 				gotoxy(SHORT(A.col*mCol+j) , SHORT(A.row*nRow+i) );
-				textColor(BLACK, YELLOW);
+				textColor(BLACK, WHITE);
 				cout << "-";
 			}
 			else if ((j == 1 || j == mCol) && (1 < i) && (i < nRow))
 			{
 				gotoxy(SHORT(A.col*mCol+j) , SHORT(A.row*nRow+i) );
-				textColor(BLACK, YELLOW);
+				textColor(BLACK, WHITE);
 				cout << "|";
 			}
 			else if (i > 1 && i < nRow && j > 1 && j < mCol)
@@ -464,11 +444,9 @@ bool checkLineX(char **a, int y1, int y2, int x)
 	{
 		if (a[x][y] != ' ') // if there is at least 1 none-0 char, false
 		{
-			//cout << "die row: column can't run (" << x << ", " << y << ")" << endl;
 			return false;
 		}
 	}
-	// if there are only " "s on the way, true
 	//cout << "(" << x << ", " << y1 << ") => (" << x << ", " << y2 << "): OK" << endl;
 	return true;
 }
@@ -484,11 +462,9 @@ bool checkLineY(char **a, int x1, int x2, int y)
 	{
 		if (a[x][y] != ' ') // if there is at least 1 none-" " char, false
 		{
-			//cout << "die col: row can't run (" << x << ", " << y << ")" << endl;
 			return false;
 		}
 	}
-	// if there are only " "s on the way, true
 	//cout << "(" << x1 << ", " << y << ") => (" << x2 << ", " << y << "): OK" << endl;
 	return true;
 }
@@ -510,9 +486,8 @@ bool checkRectX(char **a, Point pt1, Point pt2)
 		// Check 2 line
 		if (a[pMaxCol.row][col] == ' ' && checkLineY(a, pMaxCol.row, pMaxCol.row, col) && checkLineX(a, col, pMaxCol.col, pMaxCol.row))
 		{
-			//cout << "Rect x: (" << pMinCol.row << ", " << pMinCol.col << ") => (" << pMinCol.row << ", " << col << ")  => (" << pMaxCol.row << " ," << col << ")  => (" << pMaxCol.row << " ," << pMaxCol.col << ")" << endl;
 			 // If 3 lines then return true
-			 return true;
+			return true;
 		}
 		
 	}
@@ -537,9 +512,8 @@ bool checkRectY(char **a, Point pt1, Point pt2)
 		// Check 2 line
 		if (a[row][pMaxRow.col] == ' ' && checkLineX(a, pMinRow.col, pMaxRow.col, row) && checkLineY(a, row, pMaxRow.row, pMaxRow.col))
 		{
-			//cout << "Rect y: (" << pMinRow.row << ", " << pMinRow.col << ") => (" << row << ", " << pMinRow.col << ") => (" << row << " ," << pMaxRow.col << ")  => (" << pMaxRow.row << " ," << pMaxRow.col << ")" << endl;
 			 // If 3 lines then return true
-			 return true;
+			return true;
 		}
 	}
 	// If less than 3 lines then return false
@@ -575,7 +549,6 @@ bool checkOuterLineX(char **a, Point pt1, Point pt2, int direction)  // directio
 		{
 			if (checkLineY(a, pMinCol.row, pMaxCol.row, col))
 			{
-				//cout << "(" << pMinCol.row << ", " << pMinCol.col << ") => (" << pMinCol.row << ", " << col << ") => (" << pMaxCol.row << ", " << col << ") => (" << pMaxCol.row << ", " << pMaxCol.col << ")" << endl;
 				return true;
 			}
 			col += direction;
@@ -613,7 +586,6 @@ bool checkOuterLineY(char **a, Point pt1, Point pt2, int direction)  // directio
 		{
 			if (checkLineX(a, pMinRow.col, pMaxRow.col, row))
 			{
-				//cout << "(" << pMinRow.row << ", " << pMinRow.col << ") => (" << row << ", " << pMinRow.col << ") => (" << row << ", " << pMaxRow.col << ") => (" << pMaxRow.row << ", " << pMaxRow.col << ")" << endl;
 				return true;
 			}
 			row += direction;
@@ -631,13 +603,15 @@ void check2Points(char **a, Point pt1, Point pt2)
 		{
 			if (checkLineX(a, pt1.col, pt2.col, pt1.row))
 			{
-				//overlapCube(a, BLACK, BLACK, pt1);
-				//overlapCube(a, BLACK, BLACK, pt2);
-
-				//deSelectedCube(a, BLACK, GREEN, pt1);
-				//deSelectedCube(a, BLACK, GREEN, pt2);
 				reSelectedCube(a, GREEN, BLACK, pt1);
 				reSelectedCube(a, GREEN, BLACK, pt2);
+				Sleep(100);
+				reSelectedCube(a, WHITE, BLACK, pt1);
+				reSelectedCube(a, BLACK, WHITE, pt2);
+				
+				Sleep(100);
+				overlapCube(a, BLACK, BLACK, pt1);
+				overlapCube(a, BLACK, BLACK, pt2);
 			}
 		}
 		// Check line with column
@@ -645,107 +619,209 @@ void check2Points(char **a, Point pt1, Point pt2)
 		{
 			if (checkLineY(a, pt1.row, pt2.row, pt1.col))
 			{
-				//overlapCube(a, BLACK, BLACK, pt1);
-				//overlapCube(a, BLACK, BLACK, pt2);
-
-				//deSelectedCube(a, BLACK, GREEN, pt1);
-				//deSelectedCube(a, BLACK, GREEN, pt2);
 				reSelectedCube(a, GREEN, BLACK, pt1);
 				reSelectedCube(a, GREEN, BLACK, pt2);
+				Sleep(100);
+				reSelectedCube(a, WHITE, BLACK, pt1);
+				reSelectedCube(a, BLACK, WHITE, pt2);
+				Sleep(100);
+				overlapCube(a, BLACK, BLACK, pt1);
+				overlapCube(a, BLACK, BLACK, pt2);
 			}
 		}
 		// Check in rectangle
 		else if (checkRectX(a, pt1, pt2))
 		{
-
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
 		// Check in rectangle
 		else if (checkRectY(a, pt1, pt2))
 		{
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
+	
 		// Check more right
-		else if (checkOuterLineX(a, pt1, pt2, 1))
+		if (checkOuterLineX(a, pt1, pt2, 1))
 		{
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
 		// Check more left
-		else if (checkOuterLineX(a, pt1, pt2, -1))
+		if (checkOuterLineX(a, pt1, pt2, -1))
 		{
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
 		// Check more down
-		else if (checkOuterLineY(a, pt1, pt2, 1))
+		if (checkOuterLineY(a, pt1, pt2, 1))
 		{
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
 		// Check more up
-		else if (checkOuterLineY(a, pt1, pt2, -1))
+		if (checkOuterLineY(a, pt1, pt2, -1))
 		{
-			//overlapCube(a, BLACK, BLACK, pt1);
-			//overlapCube(a, BLACK, BLACK, pt2);
-
-			//deSelectedCube(a, BLACK, GREEN, pt1);
-			//deSelectedCube(a, BLACK, GREEN, pt2);
 			reSelectedCube(a, GREEN, BLACK, pt1);
 			reSelectedCube(a, GREEN, BLACK, pt2);
+			Sleep(100);
+			reSelectedCube(a, WHITE, BLACK, pt1);
+			reSelectedCube(a, BLACK, WHITE, pt2);
+			Sleep(100);
+			overlapCube(a, BLACK, BLACK, pt1);
+			overlapCube(a, BLACK, BLACK, pt2);
 		}
+	
 	}
 	else 
 	{
-		//overlapCube(a, BLACK, BLACK, pt1);
-		//overlapCube(a, BLACK, BLACK, pt2);
-
-		//deSelectedCube(a, BLACK, GREEN, pt1);
-		//deSelectedCube(a, BLACK, GREEN, pt2);
 		reSelectedCube(a, RED, BLACK, pt1);
 		reSelectedCube(a, RED, BLACK, pt2);
-		Sleep(800);
+		Sleep(100);
 		reSelectedCube(a, WHITE, BLACK, pt1);
-		reSelectedCube(a, BLACK, WHITE, pt2);
-	}	
+		reSelectedCube(a, WHITE, BLACK, pt2);
+	}
 }
 
-bool checkEndGame(char **a, char b[][MAXCOL], int row, int col)
+bool checkValidMove(char **a, Point pt1, Point pt2)
 {
-	for (int i = 1; i < row - 1; i++)
+	bool check;
+	if ((pt1.row != pt2.row || pt1.col != pt2.col) && a[pt1.row][pt1.col] == a[pt2.row][pt2.col])
 	{
-		for (int j = 1; j < col - 1; j++)
-			if (a[i][j] != b[i][j])
-				return false;
+		// Check line with row (vertical I)
+		if(pt1.row == pt2.row)
+			if (checkLineX(a, pt1.col, pt2.col, pt1.row))
+				check = true;
+
+		// Check line with column (horizontal I)
+		else if(pt1.col == pt2.col)
+			if (checkLineY(a, pt1.row, pt2.row, pt1.col))
+				check = true;
+
+		// Check in rectangle (vertical Z)
+		else if (checkRectX(a, pt1, pt2))
+			check = true;
+
+		// Check in rectangle (horizontal Z)
+		else if (checkRectY(a, pt1, pt2))
+			check = true;
+		
+		// Check U shape
+		else
+		{
+			// Check more right
+			if (checkOuterLineX(a, pt1, pt2, 1))
+				check = true;
+			// Check more left
+			if (checkOuterLineX(a, pt1, pt2, -1))
+				check = true;
+			// Check more down
+			if (checkOuterLineY(a, pt1, pt2, 1))
+				check = true;
+			// Check more up
+			if (checkOuterLineY(a, pt1, pt2, -1))
+				check = true;
+		}
 	}
-	return true;
+	else 
+		check = false;
+	return check;
+}
+
+bool checkEndGame(char **a, int row, int col)
+{
+	for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (a[i][j] != ' ')
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool checkUnabledToPlayAnymore(char **a, int row, int col)
+{
+	char **checkArray = NULL;
+	checkArray = new char*[row];
+	for (int i = 0; i < row; i++)
+		checkArray[row] = new char[col];
+
+	for (int i = 0; i < row; i++)
+		for (int j = 0; j < col; j++)
+			checkArray[i][j] = a[i][j];
+
+Checked:	
+	for (SHORT row1 = 0; row1 < row; row1++)
+		for (SHORT col1 = 0; col1 < col; col1++)
+		{
+			if (checkArray[row1][col1] = ' ')
+				continue;
+			for (SHORT row2 = 0; row2 < row; row2++)
+				for(SHORT col2 = 0; col2 < col; col2++)
+				{
+					if (row1 == row2 && col1 == col2)
+						continue;
+					if (checkArray[row1][col1] != checkArray[row2][col2])
+						continue;
+					
+					Point A = {row1, col1};
+					Point B = {row2, col2};
+
+					if (checkValidMove(a, A, B))
+					{
+						checkArray[row1][col1] = ' ';
+						checkArray[row2][col2] = ' ';
+						goto Checked;
+					}
+				}
+		}
+	if (checkEndGame(checkArray, row, col))
+	{
+		for (int i = 0; i < row; i++)
+			delete [] checkArray[i];
+		delete [] checkArray;
+		return true;
+	}
+
+	for (int i = 0; i < row; i++)
+		delete [] checkArray[i];
+	delete [] checkArray;
+	return false;
 }
 
 int main()
@@ -762,21 +838,9 @@ int main()
 		deleteScreen();
 		Sleep(500);
 		// Play BG MUSIC
-    	//PlaySound(TEXT("music\\katyusha8bit.wav"), NULL, SND_FILENAME|SND_LOOP|SND_ASYNC);
-		int x1, y1, x2, y2;
-		//char a[MAXROW][MAXCOL];
+		//PlaySound(TEXT("music\\katyusha8bit.wav"), NULL, SND_FILENAME|SND_LOOP|SND_ASYNC);
 		char **a = NULL;
 		char inputKey = ENTER_KEY;
-
-		char b[MAXROW][MAXCOL] = {
-			{' ',' ',' ',' ',' ',' '},
-			{' ',' ',' ',' ',' ',' '},
-			{' ',' ',' ',' ',' ',' '},
-			{' ',' ',' ',' ',' ',' '},
-			{' ',' ',' ',' ',' ',' '},
-			{' ',' ',' ',' ',' ',' '}
-		};
-
 
 		srand(time(0));
 		createArray(a, MAXROW, MAXCOL);
@@ -794,49 +858,9 @@ int main()
 
 		while ((inputKey = getKey()) != ESC_KEY)
 		{	
-			if (checkEndGame(a, b, MAXROW, MAXCOL))
+			if (checkEndGame(a, MAXROW, MAXCOL))
 				break;
-			// Refresh input lines
-			/*gotoxy(70, 1);
-			textColor(BLACK, BLACK);
-			cout << " ";
-			gotoxy(70, 2);
-			cout << " ";
-			gotoxy(70, 5);
-			cout << " ";
-			gotoxy(70, 6);
-			cout << " ";
-			gotoxy(70, 8);
-			cout << "                                ";
-
-			gotoxy(70, 0);
-			textColor(BLACK, AQUA);
-			cout << "Input x1, y1: \n";
-			gotoxy(70, 1);
-			textColor(BLACK, YELLOW);
-			cin >> x1;
-			gotoxy(70, 2);
-			cin >> y1;
-			pt1.row = x1;
-			pt1.col = y1;
-			//pt1.value = b[pt1.row][pt1.col];
-
-			gotoxy(70, 4);
-			textColor(BLACK, AQUA);
-			cout << "Input x2, y2: \n";
-			gotoxy(70, 5);
-			textColor(BLACK, YELLOW);
-			cin >> x2;
-			gotoxy(70, 6);
-			cin >> y2;
-			pt2.row = x2;
-			pt2.col = y2;
-			//pt2.value = b[pt2.row][pt2.col];
-
-			gotoxy(70, 8);
-			textColor(BLACK, RED);
-			system("pause");*/
-
+			
 			switch (inputKey)
 			{
 			case ARROW_UP:
@@ -909,8 +933,10 @@ int main()
 					
 					deSelectedCube(a, BLACK, GREEN, pt1);
 					reSelectedCube(a, AQUA, YELLOW, pt1);
-					//Selected.row++;
-					Selected.col++;
+					if (Selected.col < MAXROW - 2 && Selected.row <= MAXROW - 2)
+						Selected.col++;
+					else 
+						Selected.col--;
 					selectedCube(a, WHITE, RED, Selected);
 					
 				}
@@ -918,32 +944,21 @@ int main()
 				{
 					if (Selected.row == pt1.row && Selected.col == pt1.col)
 					{
-						/*GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
-						wprintf(L"You can't select the same node twice\n");*/
 						gotoxy(71, 3);
 						textColor(BLACK, YELLOW);
 						cout << "You can't choose the same cube twice!";
 						textColor(BLACK, WHITE);
 						continue;
 					}
-					/*GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
-					wprintf(L"Second Node Selected\n");
-					secondNode.isSelected = true;
-					secondNode.posX = posX;
-					secondNode.posY = posY;*/
 					pt2 = Selected;
 					pt2.isSelected = true;
 
 					deSelectedCube(a, BLACK, GREEN, pt2);
 					reSelectedCube(a, AQUA, YELLOW, pt2);
 
-					check2Points(a, pt1, pt2);
-
-					//Selected.row++;
 					Selected = pt1;
 					Selected.isSelected = false;
 
-					//selectedCube(a, WHITE, RED, Selected);
 				}
 				else
 				{
@@ -954,56 +969,18 @@ int main()
 			default:
 				break;
 			}
-
-			// Restore the previous Node to original state
-			/*DrawCube(matrix, difficulty, tempNode, BLACK, WHITE);
-
-			if (firstNode.isSelected)
+			if (pt1.isSelected == true && pt2.isSelected == true)
 			{
-				DrawCube(matrix, difficulty, firstNode, AQUA, BLACK);
+				check2Points(a, pt1, pt2);
+				pt1.isSelected = false;
+				pt2.isSelected = false;
 			}
-
-			if (secondNode.isSelected)
-			{
-				DrawCube(matrix, difficulty, secondNode, AQUA, BLACK);
-				firstNode.prepareSelected(secondNode);
-
-				// Check if 2 nodes are selected is the same character
-				if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode, backGround))
-				{
-					GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
-					wprintf(L"2 nodes are identical\n");
-					// Draw background at the posX and posY coordinates
-
-					// Check local elements of the matrix if it different from ' '
-					Selected newCor = checkLocalElements(matrix, difficulty, secondNode);
-
-					posX = newCor.posX;
-					posY = newCor.posY;
-				}
-				else
-				{
-					GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
-					wprintf(L"2 nodes are different\n");
-				}
-
-				if (isSolved(matrix, difficulty))
-				{
-					GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
-					wprintf(L"You win\n");
-				}
-			}
-
-			if (moveToPosition(matrix, difficulty, posX, posY))
-			{
-				break;
-			}
-
-			tempNode.posX = posX;
-			tempNode.posY = posY;
-
-			check2Points(a, pt1, pt2);*/
+			for (int i = 0; i < MAXROW - 1; i++)
+				for (int j = 0; j < MAXCOL - 1; j++)
+					if (a[i][j] == ' ')
+						overlapCube(a, BLACK, BLACK, Point{i, j});
 		}
+		deleteScreen();
 		for (int i = 0; i < MAXROW; i++)
 			delete [] a[i];
 		delete [] a;
